@@ -41,22 +41,22 @@
       <small class="source">
         <strong>Source:</strong> <a href="https://quickstats.nass.usda.gov" target="_blank">USDA National Agricultural Statistics Service</a>
       </small>
-      <v-layout class="actions">
-        <v-flex>
+      <v-layout row wrap class="actions">
+        <v-flex xs12 sm4>
           <p>Focus on:</p>
           <v-radio-group v-model="focus">
             <v-radio label="National and State data" value="all"/>
             <v-radio label="State data" value="state"/>
           </v-radio-group>
         </v-flex>
-        <v-flex>
+        <v-flex xs12 sm4>
           <p>Center time window around:</p>
           <v-radio-group v-model="windowType">
             <v-radio label="All data" value="all"/>
             <v-radio label="Wolf reintroductions" value="wolf"/>
           </v-radio-group>
         </v-flex>
-        <v-flex>
+        <v-flex xs12 sm4>
           <p>Scale inventory values as:</p>
           <v-radio-group v-model="yScaleType">
             <v-radio label="Linear" value="linear"/>
@@ -489,5 +489,11 @@ export default {
 }
 .source {
   font-style: italic;
+}
+
+@media (max-width: 600px) {
+  .actions .flex + .flex {
+    margin-top: 1em;
+  }
 }
 </style>
