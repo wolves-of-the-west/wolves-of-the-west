@@ -5,9 +5,6 @@
         <v-flex sm12 md4 lg6>
           <section class="graph-info">
             <h1 class="title">{{ title }}</h1>
-            <div class="loader" v-if="!loaded">
-              <icon name="spinner" spin/> Loading&hellip;
-            </div>
             <h2 class="sub-title" v-if="loaded">
               {{ xFormat(xExtent[0]) }}
               &ndash;
@@ -49,6 +46,9 @@
           </template>
         </v-flex>
       </v-layout>
+      <div class="loader" v-if="!loaded">
+        <icon name="spinner" spin/> Loading&hellip;
+      </div>
       <livestock-inventory-annotations
         v-if="loaded"
         :leftMargin="margin.left"
