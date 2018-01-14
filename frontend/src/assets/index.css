@@ -1,3 +1,9 @@
+a {
+  display: inline-block;
+  text-decoration: none;
+  border-bottom: 1px dashed rgba(70, 130, 180, 0.5);
+}
+
 .sub-title {
   display: block;
   margin-top: 0.5em;
