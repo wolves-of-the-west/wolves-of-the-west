@@ -88,7 +88,7 @@ export default {
         bottom: 20,
         left: 50
       },
-      height: 300,
+      height: 250,
       width: 1250,
       earliestWolfReintroductionYear: new Date(1995, 0, 1),
       latestWolfReintroductionYear: new Date(1996, 0, 1),
