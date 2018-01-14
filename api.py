@@ -1,5 +1,6 @@
 import hug
 import pymysql
+import pymysql.cursors
 from settings import *
 
 def get_db_connection():
@@ -65,7 +66,9 @@ def cattle_inventory_national():
         year
     """
     cursor.execute(sql)
-    return cursor.fetchall()
+    data = cursor.fetchall()
+  connection.close()
+  return data
 
 @hug.get('/cattle/inventory/state')
 def cattle_inventory_state():
@@ -91,4 +94,6 @@ def cattle_inventory_state():
         state
     """
     cursor.execute(sql)
-    return cursor.fetchall()
+    data = cursor.fetchall()
+  connection.close()
+  return data
