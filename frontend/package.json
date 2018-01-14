@@ -16,6 +16,7 @@
     "d3-svg-annotation": "^2.1.0",
     "numeral": "^2.0.6",
     "vue": "^2.5.2",
+    "vue-awesome": "^2.3.4",
     "vue-router": "^3.0.1",
     "vuetify": "^0.17.5"
   },

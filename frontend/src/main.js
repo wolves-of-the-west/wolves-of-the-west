@@ -4,16 +4,24 @@ import Vue from 'vue'
 import Vuetify from 'vuetify'
 import App from './App'
 import router from './router'
+
+import 'vue-awesome/icons/spinner'
+import Icon from 'vue-awesome/components/Icon'
+
 import './assets/index.css'
 
 Vue.config.productionTip = false
 
 Vue.use(Vuetify)
+Vue.component('icon', Icon)
 
 /* eslint-disable no-new */
 new Vue({
   el: '#app',
   router,
   template: '<App/>',
-  components: { App }
+  components: {
+    App,
+    Icon
+  }
 })
