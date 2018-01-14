@@ -11,7 +11,7 @@ export default {
   props: ['width', 'x', 'leftMargin', 'xDomain'],
   data () {
     return {
-      height: 100,
+      height: 110,
       earliestWolfReintroductionYear: new Date(1995, 1, 1),
       latestWolfReintroductionYear: new Date(1996, 1, 1),
       lastWolfKilledInYellowstone: new Date(1926, 1, 1)

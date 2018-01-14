@@ -8,6 +8,8 @@ import router from './router'
 import 'vue-awesome/icons/spinner'
 import Icon from 'vue-awesome/components/Icon'
 
+import { store } from '@/store/store'
+
 import './assets/index.css'
 
 Vue.config.productionTip = false
@@ -19,6 +21,7 @@ Vue.component('icon', Icon)
 new Vue({
   el: '#app',
   router,
+  store,
   template: '<App/>',
   components: {
     App,

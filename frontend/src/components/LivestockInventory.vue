@@ -1,18 +1,54 @@
 <template>
   <v-card flat>
     <v-card-text>
-      <h1 class="title">{{ title }}</h1>
-      <div class="loader" v-if="!loaded">
-        <icon name="spinner" spin/> Loading&hellip;
-      </div>
-      <h2 class="sub-title" v-if="loaded">
-        {{ xFormat(xExtent[0]) }}
-        &ndash;
-        {{ xFormat(xExtent[1]) }}
-        <span class="diff">
-          ({{ xExtent[1].getFullYear() - xExtent[0].getFullYear() }} years)
-        </span>
-      </h2>
+      <v-layout row wrap>
+        <v-flex sm12 md4 lg6>
+          <section class="graph-info">
+            <h1 class="title">{{ title }}</h1>
+            <div class="loader" v-if="!loaded">
+              <icon name="spinner" spin/> Loading&hellip;
+            </div>
+            <h2 class="sub-title" v-if="loaded">
+              {{ xFormat(xExtent[0]) }}
+              &ndash;
+              {{ xFormat(xExtent[1]) }}
+              <span class="diff">
+                ({{ xExtent[1].getFullYear() - xExtent[0].getFullYear() }} years)
+              </span>
+            </h2>
+            <small class="source">
+              <strong>Source:</strong> <a href="https://quickstats.nass.usda.gov" target="_blank">USDA National Agricultural Statistics Service</a>
+            </small>
+          </section>
+        </v-flex>
+        <v-flex sm12 md8 lg6 class="actions">
+          <template v-if="loaded">
+            <v-layout row wrap>
+              <v-flex xs12 sm4>
+                Zoom to:
+                <v-radio-group v-model="usdaTimeWindow">
+                  <v-radio label="All data" value="all"/>
+                  <v-radio label="Wolf reintroductions" value="wolf"/>
+                </v-radio-group>
+              </v-flex>
+              <v-flex xs12 sm4>
+                Show:
+                <v-radio-group v-model="focus">
+                  <v-radio label="National and State" value="all"/>
+                  <v-radio label="State" value="state"/>
+                </v-radio-group>
+              </v-flex>
+              <v-flex xs12 sm4>
+                Scale inventory as:
+                <v-radio-group v-model="usdaYScaleType">
+                  <v-radio label="Linear" value="linear"/>
+                  <v-radio label="Logarithmic" value="log"/>
+                </v-radio-group>
+              </v-flex>
+            </v-layout>
+          </template>
+        </v-flex>
+      </v-layout>
       <livestock-inventory-annotations
         v-if="loaded"
         :leftMargin="margin.left"
@@ -41,34 +77,6 @@
           <g ref="tips"/>
         </g>
       </svg>
-      <template v-if="loaded">
-        <small class="source">
-          <strong>Source:</strong> <a href="https://quickstats.nass.usda.gov" target="_blank">USDA National Agricultural Statistics Service</a>
-        </small>
-        <v-layout row wrap class="actions">
-          <v-flex xs12 sm4>
-            <p>Focus on:</p>
-            <v-radio-group v-model="focus">
-              <v-radio label="National and State data" value="all"/>
-              <v-radio label="State data" value="state"/>
-            </v-radio-group>
-          </v-flex>
-          <v-flex xs12 sm4>
-            <p>Center time window around:</p>
-            <v-radio-group v-model="windowType">
-              <v-radio label="All data" value="all"/>
-              <v-radio label="Wolf reintroductions" value="wolf"/>
-            </v-radio-group>
-          </v-flex>
-          <v-flex xs12 sm4>
-            <p>Scale inventory values as:</p>
-            <v-radio-group v-model="yScaleType">
-              <v-radio label="Linear" value="linear"/>
-              <v-radio label="Logarithmic" value="log"/>
-            </v-radio-group>
-          </v-flex>
-        </v-layout>
-      </template>
     </v-card-text>
   </v-card>
 </template>
@@ -77,6 +85,7 @@
 import * as d3 from 'd3'
 import axios from 'axios'
 import * as numeral from 'numeral'
+import { mapGetters } from 'vuex'
 import { annotation, annotationCalloutCircle } from 'd3-svg-annotation'
 import LivestockInventoryAnnotations from './LivestockInventoryAnnotations'
 export default {
@@ -93,18 +102,34 @@ export default {
         bottom: 20,
         left: 50
       },
-      height: 250,
-      width: 1250,
-      earliestWolfReintroductionYear: new Date(1995, 0, 1),
-      latestWolfReintroductionYear: new Date(1996, 0, 1),
-      lastWolfKilledInYellowstone: new Date(1926, 0, 1),
+      height: 125,
+      width: 1200,
       stateLabelHeight: 14,
-      focus: 'all',
-      yScaleType: 'linear',
-      windowType: 'all'
+      focus: 'all'
     }
   },
   computed: {
+    ...mapGetters([
+      'earliestWolfReintroductionYear',
+      'latestWolfReintroductionYear',
+      'lastWolfKilledInYellowstone'
+    ]),
+    usdaTimeWindow: {
+      get () {
+        return this.$store.getters.usdaTimeWindow
+      },
+      set (value) {
+        this.$store.commit('setUsdaTimeWindow', value)
+      }
+    },
+    usdaYScaleType: {
+      get () {
+        return this.$store.getters.usdaYScaleType
+      },
+      set (value) {
+        this.$store.commit('setUsdaYScaleType', value)
+      }
+    },
     allData () {
       return [].concat(this.national).concat(this.state)
     },
@@ -217,7 +242,7 @@ export default {
       return d3.mean(this.stateData, d => { return d.value })
     },
     yIsLinear () {
-      return this.yScaleType === 'linear'
+      return this.usdaYScaleType === 'linear'
     },
     wolfReintroLine () {
       return d3.select(this.$refs.wolfReintroLine)
@@ -229,7 +254,7 @@ export default {
       return d3.select(this.$refs.wolfLastKilledInYellowstoneLine)
     },
     xDomain () {
-      return this.windowType === 'all' ? this.xExtent : this.xWolfExtent
+      return this.usdaTimeWindow === 'all' ? this.xExtent : this.xWolfExtent
     },
     yearBisector () {
       return d3.bisector(d => {
@@ -237,7 +262,7 @@ export default {
       }).right
     },
     fetchStateData () {
-      return axios.get(`${API_URL}/${this.type.toLowerCase()}/inventory/state`) // eslint-disable-line no-undef
+      return axios.get(`${API_URL}/${this.type.toLowerCase()}/inventory/state?state=All`) // eslint-disable-line no-undef
     },
     fetchNationalData () {
       return axios.get(`${API_URL}/${this.type.toLowerCase()}/inventory/national`) // eslint-disable-line no-undef
@@ -419,7 +444,7 @@ export default {
       return axios.all([this.fetchNationalData, this.fetchStateData])
         .then(axios.spread((national, state) => {
           this.national = this.objectifyTimestamps(national.data)
-          this.state = this.objectifyTimestamps(state.data)
+          this.state = this.objectifyTimestamps(state.data.data)
           this.loaded = true
           this.setup()
         }))
@@ -435,10 +460,10 @@ export default {
     focus () {
       this.graph()
     },
-    windowType () {
+    usdaTimeWindow () {
       this.graph()
     },
-    yScaleType () {
+    usdaYScaleType () {
       this.yAxis.scale(this.yScale)
       this.graph()
     },
@@ -468,10 +493,9 @@ export default {
   margin-top: -0.5em;
 }
 .actions {
-  margin-top: 1em;
   background: #eee;
   border-radius: 0.3em;
-  padding: 1em;
+  padding: 0.5em 1em;
 }
 .actions .radio-group {
   padding: 0;
@@ -497,6 +521,9 @@ export default {
 }
 .loader {
   margin-top: 1em;
+}
+.graph-info {
+  margin-bottom: 1em;
 }
 
 @media (max-width: 600px) {

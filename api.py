@@ -71,10 +71,10 @@ def cattle_inventory_national():
   return data
 
 @hug.get('/cattle/inventory/state')
-def cattle_inventory_state():
+def cattle_inventory_state(state):
   connection = get_db_connection()
   with connection.cursor() as cursor:
-    sql = """
+    dataSQL = """
       SELECT
         CONCAT(UCASE(LEFT(state, 1)), LCASE(SUBSTRING(state, 2))) AS state,
         year,
@@ -89,11 +89,34 @@ def cattle_inventory_state():
         AND commodity = 'CATTLE'
         AND data_item = 'CATTLE, INCL CALVES - INVENTORY'
         AND domain = 'TOTAL'
+    """
+    if (state.lower() != 'all'):
+      dataSQL += "AND state ='%s'" % state
+    dataSQL += """
       ORDER BY
         year,
         state
     """
-    cursor.execute(sql)
+    cursor.execute(dataSQL)
     data = cursor.fetchall()
+
+    maxSQL = """
+      SELECT
+        MAX(value) as maxStateValue
+      FROM
+        usda
+      WHERE
+        program = 'SURVEY'
+        AND period = 'FIRST OF JAN'
+        AND geo_level = 'STATE'
+        AND commodity = 'CATTLE'
+        AND data_item = 'CATTLE, INCL CALVES - INVENTORY'
+        AND domain = 'TOTAL'
+    """
+    cursor.execute(maxSQL)
+    maxStateValue = cursor.fetchone()['maxStateValue']
   connection.close()
-  return data
+  return {
+    'data': data,
+    'maxStateValue': maxStateValue
+  }
