@@ -18,7 +18,7 @@
             </small>
           </section>
         </v-flex>
-        <v-flex sm12 md8 lg6 class="actions">
+        <v-flex sm12 md8 lg6 class="actions" v-if="loaded">
           <template v-if="loaded">
             <v-layout row wrap>
               <v-flex xs12 sm4>
