@@ -63,9 +63,9 @@
       </v-layout>
       <v-layout row wrap>
         <v-flex xs12>
-          <small class="source">
+          <p class="source">
             <strong>Source:</strong>&ensp;<a href="https://quickstats.nass.usda.gov" target="_blank">USDA National Agricultural Statistics Service</a>
-          </small>
+          </p>
         </v-flex>
       </v-layout>
     </v-card-text>
@@ -147,5 +147,10 @@ export default {
 }
 .actions p {
   margin: 0;
+}
+.source {
+  opacity: 0.75;
+  margin-top: 1em;
+  font-size: 0.75em;
 }
 </style>
