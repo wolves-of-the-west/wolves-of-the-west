@@ -1,30 +1,30 @@
 <template>
-  <v-card flat>
-    <v-card-text>
-      <h1 class="title">{{ state }}</h1>
-      <div class="loader" v-if="!loaded">
-        <icon name="spinner" spin/> Loading&hellip;
-      </div>
-      <svg :viewBox="viewBox">
-        <g ref="xAxis"/>
-        <g ref="yAxis"/>
-        <clipPath id="bodyClipPath">
-          <rect x="0" y="0" :width="bodyWidth" :height="bodyHeight"/>
-        </clipPath>
-        <rect
-          :x="margin.left" :y="margin.top"
-          ref="mouse" class="mouse"
-          :width="bodyWidth" :height="bodyHeight"/>
-        <g ref="body" clip-path="url(#bodyClipPath)">
-          <path ref="stateLine" class="inventory-line"/>
-          <line ref="wolfReintroLine" class="wolf-line"/>
-          <line ref="wolfSecondReintroLine" class="wolf-line"/>
-          <line ref="wolfLastKilledInYellowstoneLine" class="wolf-line"/>
-          <g ref="tips"/>
-        </g>
-      </svg>
-    </v-card-text>
-  </v-card>
+  <section class="state">
+    <h1 class="title">{{ state }}</h1>
+    <div class="loader" v-if="!loaded">
+      <icon name="spinner" spin/> Loading&hellip;
+    </div>
+    <svg :viewBox="viewBox">
+      <g ref="xAxis"/>
+      <g ref="yAxis"/>
+      <clipPath id="bodyClipPath">
+        <rect x="0" y="0" :width="bodyWidth" :height="bodyHeight"/>
+      </clipPath>
+      <rect
+        :x="margin.left" :y="margin.top"
+        ref="mouse" class="mouse"
+        :width="bodyWidth" :height="bodyHeight"/>
+      <g ref="body" clip-path="url(#bodyClipPath)">
+        <path ref="inventoryLine" class="inventory-line"/>
+        <path ref="cattleLossLine" class="adult-loss-line"/>
+        <path ref="calfLossLine" class="youth-loss-line"/>
+        <line ref="wolfReintroLine" class="wolf-line"/>
+        <line ref="wolfSecondReintroLine" class="wolf-line"/>
+        <line ref="wolfLastKilledInYellowstoneLine" class="wolf-line"/>
+        <g ref="tips"/>
+      </g>
+    </svg>
+  </section>
 </template>
 
 <script>
@@ -37,7 +37,9 @@ export default {
   props: ['title', 'type', 'state'],
   data () {
     return {
-      data: [],
+      inventoryData: [],
+      cattleLossData: [],
+      calfLossData: [],
       loaded: false,
       margin: {
         top: 15,
@@ -86,7 +88,7 @@ export default {
         .range([0, this.bodyWidth])
     },
     xExtent () {
-      let extent = d3.extent(this.data, d => { return d.timestamp })
+      let extent = d3.extent(this.inventoryData, d => { return d.timestamp })
       return [
         d3.timeYear.offset(extent[0], -1),
         d3.timeYear.offset(extent[1], 1)
@@ -157,7 +159,7 @@ export default {
       }).right
     },
     fetchStateData () {
-      return axios.get(`${API_URL}/${this.type.toLowerCase()}/inventory/state?state=${this.state}`) // eslint-disable-line no-undef
+      return axios.get(`${API_URL}/usda/${this.type.toLowerCase()}/state?state=${this.state}`) // eslint-disable-line no-undef
     }
   },
   methods: {
@@ -183,9 +185,9 @@ export default {
           let x = m[0] - this.margin.left
           let domainX = this.x.invert(x)
           let search = new Date(domainX.getFullYear(), 0, 1)
-          let index = this.yearBisector(this.data, search)
-          if (this.data[index]) {
-            this.tip(this.data[index])
+          let index = this.yearBisector(this.inventoryData, search)
+          if (this.inventoryData[index]) {
+            this.tip(this.inventoryData[index])
           }
         })
         .on('mouseout', () => {
@@ -225,8 +227,16 @@ export default {
         .attr('y2', 0)
     },
     graphState (t) {
-      d3.select(this.$refs.stateLine)
-        .datum(this.data)
+      d3.select(this.$refs.inventoryLine)
+        .datum(this.inventoryData)
+        .transition(t)
+        .attr('d', this.lineFn)
+      d3.select(this.$refs.cattleLossLine)
+        .datum(this.cattleLossData)
+        .transition(t)
+        .attr('d', this.lineFn)
+      d3.select(this.$refs.calfLossLine)
+        .datum(this.calfLossData)
         .transition(t)
         .attr('d', this.lineFn)
     },
@@ -256,7 +266,9 @@ export default {
     },
     fetchData () {
       return this.fetchStateData.then(response => {
-        this.data = this.objectifyTimestamps(response.data.data)
+        this.inventoryData = this.objectifyTimestamps(response.data.inventoryData)
+        this.cattleLossData = this.objectifyTimestamps(response.data.cattleLossData)
+        this.calfLossData = this.objectifyTimestamps(response.data.calfLossData)
         this.yMax = response.data.maxStateValue
         this.loaded = true
         this.setup()
@@ -289,3 +301,9 @@ export default {
   }
 }
 </script>
+
+<style>
+.state {
+  margin-top: 1em;
+}
+</style>

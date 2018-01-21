@@ -44,11 +44,29 @@ def index():
   f.close()
   return contents
 
-@hug.get('/cattle/inventory/national')
-def cattle_inventory_national():
+@hug.get('/usda/cattle/stats')
+def usda_cattle_stats():
   connection = get_db_connection()
   with connection.cursor() as cursor:
     sql = """
+      SELECT
+        MIN(year) as minYear,
+        MAX(year) as maxYear
+      FROM
+        usda
+      WHERE
+        commodity = 'CATTLE'
+    """
+    cursor.execute(sql)
+    data = cursor.fetchone()
+  connection.close()
+  return data
+
+@hug.get('/usda/cattle/national')
+def usda_cattle_national():
+  connection = get_db_connection()
+  with connection.cursor() as cursor:
+    inventorySQL = """
       SELECT
         year,
         value,
@@ -65,16 +83,46 @@ def cattle_inventory_national():
       ORDER BY
         year
     """
-    cursor.execute(sql)
-    data = cursor.fetchall()
+    cursor.execute(inventorySQL)
+    inventoryData = cursor.fetchall()
   connection.close()
-  return data
+  return {
+    'inventoryData': inventoryData,
+    'cattleLossData': get_national_loss('CATTLE, (EXCL CALVES) - LOSS, DEATH, MEASURED IN HEAD'),
+    'calfLossData': get_national_loss('CATTLE, CALVES - LOSS, DEATH, MEASURED IN HEAD')
+  }
 
-@hug.get('/cattle/inventory/state')
-def cattle_inventory_state(state):
+def get_national_loss(data_item):
   connection = get_db_connection()
   with connection.cursor() as cursor:
-    dataSQL = """
+    sql = """
+      SELECT
+        year,
+        value,
+        CONCAT(year, '-01-01T00:00:00-00:00') AS timestamp
+      FROM
+        usda
+      WHERE
+        program = 'SURVEY'
+        AND period = 'YEAR'
+        AND geo_level = 'NATIONAL'
+        AND commodity = 'CATTLE'
+        AND data_item = '{0}'
+        AND domain = 'TOTAL'
+    """.format(data_item)
+    sql += """
+      ORDER BY
+        year
+    """
+    cursor.execute(sql)
+    data = cursor.fetchall()
+  return data
+
+@hug.get('/usda/cattle/state')
+def usda_cattle_state(state):
+  connection = get_db_connection()
+  with connection.cursor() as cursor:
+    inventorySQL = """
       SELECT
         CONCAT(UCASE(LEFT(state, 1)), LCASE(SUBSTRING(state, 2))) AS state,
         year,
@@ -91,14 +139,14 @@ def cattle_inventory_state(state):
         AND domain = 'TOTAL'
     """
     if (state.lower() != 'all'):
-      dataSQL += "AND state ='%s'" % state
-    dataSQL += """
+      inventorySQL += "AND state ='%s'" % state
+    inventorySQL += """
       ORDER BY
         year,
         state
     """
-    cursor.execute(dataSQL)
-    data = cursor.fetchall()
+    cursor.execute(inventorySQL)
+    inventoryData = cursor.fetchall()
 
     maxSQL = """
       SELECT
@@ -115,8 +163,41 @@ def cattle_inventory_state(state):
     """
     cursor.execute(maxSQL)
     maxStateValue = cursor.fetchone()['maxStateValue']
+    
   connection.close()
   return {
-    'data': data,
+    'inventoryData': inventoryData,
+    'cattleLossData': get_state_loss('CATTLE, (EXCL CALVES) - LOSS, DEATH, MEASURED IN HEAD', state),
+    'calfLossData': get_state_loss('CATTLE, CALVES - LOSS, DEATH, MEASURED IN HEAD', state),
     'maxStateValue': maxStateValue
   }
+
+def get_state_loss(data_item, state):
+  connection = get_db_connection()
+  with connection.cursor() as cursor:
+    sql = """
+      SELECT
+        CONCAT(UCASE(LEFT(state, 1)), LCASE(SUBSTRING(state, 2))) AS state,
+        year,
+        value,
+        CONCAT(year, '-01-01T00:00:00-00:00') AS timestamp
+      FROM
+        usda
+      WHERE
+        program = 'SURVEY'
+        AND period = 'YEAR'
+        AND geo_level = 'STATE'
+        AND commodity = 'CATTLE'
+        AND data_item = '{0}'
+        AND domain = 'TOTAL'
+    """.format(data_item)
+    if (state.lower() != 'all'):
+      sql += "AND state ='%s'" % state
+    sql += """
+      ORDER BY
+        year,
+        state
+    """
+    cursor.execute(sql)
+    data = cursor.fetchall()
+  return data
