@@ -11,6 +11,19 @@ a {
   font-style: italic;
 }
 
+.adult-inventory-line {
+  stroke: steelblue;
+  stroke-width: 1px;
+  fill: none;
+}
+
+.youth-inventory-line {
+  stroke: steelblue;
+  stroke-width: 1px;
+  stroke-dasharray: 2;
+  fill: none;
+}
+
 .adult-loss-line {
   stroke: firebrick;
   stroke-width: 1px;

@@ -21,13 +21,14 @@
         ref="mouse" class="mouse"
         :width="bodyWidth" :height="bodyHeight"/>
       <g ref="body" clip-path="url(#bodyClipPath)">
-        <path ref="inventoryLine" class="inventory-line"/>
+        <path ref="cattleInventoryLine" class="adult-inventory-line"/>
+        <path ref="calfInventoryLine" class="youth-inventory-line"/>
         <path ref="cattleLossLine" class="adult-loss-line"/>
         <path ref="calfLossLine" class="youth-loss-line"/>
         <line ref="wolfReintroLine" class="wolf-line"/>
         <line ref="wolfSecondReintroLine" class="wolf-line"/>
         <line ref="wolfLastKilledInYellowstoneLine" class="wolf-line"/>
-        <g ref="tips"/>
+        <hoverable-data/>
       </g>
     </svg>
   </div>
@@ -38,16 +39,18 @@ import * as d3 from 'd3'
 import axios from 'axios'
 import * as numeral from 'numeral'
 import { mapGetters } from 'vuex'
-import { annotation, annotationCalloutCircle } from 'd3-svg-annotation'
 import LivestockInventoryAnnotations from './LivestockInventoryAnnotations'
+import HoverableData from '@/components/HoverableData'
 export default {
   props: ['type'],
   components: {
+    HoverableData,
     LivestockInventoryAnnotations
   },
   data () {
     return {
-      inventoryData: [],
+      cattleInventoryData: [],
+      calfInventoryData: [],
       cattleLossData: [],
       calfLossData: [],
       loaded: false,
@@ -69,6 +72,15 @@ export default {
       'usdaTimeWindow',
       'usdaYScaleType'
     ]),
+    allData () {
+      return this.cattleInventoryData.concat(
+        this.calfInventoryData.concat(
+          this.cattleLossData.concat(
+            this.calfLossData
+          )
+        )
+      )
+    },
     bodyHeight () {
       return this.height - this.margin.top - this.margin.bottom
     },
@@ -84,9 +96,6 @@ export default {
     bodyEl () {
       return d3.select(this.$refs.body)
     },
-    inventoryLineEl () {
-      return d3.select(this.$refs.inventoryLine)
-    },
     lineFn () {
       return d3.line()
         .x(d => { return this.x(d.timestamp) })
@@ -99,11 +108,7 @@ export default {
         .range([0, this.bodyWidth])
     },
     xExtent () {
-      let extent = d3.extent(this.inventoryData, d => { return d.timestamp })
-      return [
-        d3.timeYear.offset(extent[0], -1),
-        d3.timeYear.offset(extent[1], 1)
-      ]
+      return d3.extent(this.allData, d => { return d.timestamp })
     },
     xWolfExtent () {
       let xMax = this.xExtent[1]
@@ -144,7 +149,7 @@ export default {
       return this.yIsLinear ? 0 : 1
     },
     yMax () {
-      return d3.max(this.inventoryData, d => { return d.value })
+      return d3.max(this.allData, d => { return d.value })
     },
     viewBox () {
       return [0, 0, this.width, this.height].join(' ')
@@ -167,11 +172,6 @@ export default {
     xDomain () {
       return this.usdaTimeWindow === 'all' ? this.xExtent : this.xWolfExtent
     },
-    yearBisector () {
-      return d3.bisector(d => {
-        return d.timestamp
-      }).right
-    },
     fetchNationalData () {
       return axios.get(`${API_URL}/usda/${this.type.toLowerCase()}/national`) // eslint-disable-line no-undef
     }
@@ -193,21 +193,6 @@ export default {
         'transform',
         `translate(${this.margin.left}, ${this.height - this.margin.bottom})`
       )
-      d3.select(this.$refs.mouse)
-        .on('mousemove', () => {
-          let m = d3.mouse(d3.event.currentTarget)
-          let x = m[0] - this.margin.left
-          let domainX = this.x.invert(x)
-          let search = new Date(domainX.getFullYear(), 0, 1)
-          let index = this.yearBisector(this.inventoryData, search)
-          if (this.inventoryData[index]) {
-            this.tip(this.inventoryData[index])
-          }
-        })
-        .on('mouseout', () => {
-          d3.select(this.$refs.tips).selectAll('g').remove()
-        })
-
       this.graph()
     },
     graph () {
@@ -241,8 +226,12 @@ export default {
         .attr('y2', 0)
     },
     graphNational (t) {
-      this.inventoryLineEl
-        .datum(this.inventoryData)
+      d3.select(this.$refs.cattleInventoryLine)
+        .datum(this.cattleInventoryData)
+        .transition(t)
+        .attr('d', this.lineFn)
+      d3.select(this.$refs.calfInventoryLine)
+        .datum(this.calfInventoryData)
         .transition(t)
         .attr('d', this.lineFn)
       d3.select(this.$refs.cattleLossLine)
@@ -254,33 +243,10 @@ export default {
         .transition(t)
         .attr('d', this.lineFn)
     },
-    tip (d) {
-      let annotationtip = annotation()
-        .type(annotationCalloutCircle)
-        .annotations([d].map(d => {
-          return {
-            data: d,
-            dx: this.x(d.timestamp) > this.halfBodyWidth ? -10 : 10,
-            dy: this.yScale(d.value) > this.halfBodyHeight ? -5 : 5,
-            note: {
-              title: d.year,
-              label: this.yFormat(d.value)
-            },
-            subject: {
-              radius: 5,
-              radiusPadding: 0
-            }
-          }
-        }))
-        .accessors({
-          x: d => this.x(d.timestamp),
-          y: d => this.yScale(d.value)
-        })
-      d3.select(this.$refs.tips).call(annotationtip)
-    },
     fetchData () {
       return this.fetchNationalData.then(response => {
-        this.inventoryData = this.objectifyTimestamps(response.data.inventoryData)
+        this.cattleInventoryData = this.objectifyTimestamps(response.data.cattleInventoryData)
+        this.calfInventoryData = this.objectifyTimestamps(response.data.calfInventoryData)
         this.cattleLossData = this.objectifyTimestamps(response.data.cattleLossData)
         this.calfLossData = this.objectifyTimestamps(response.data.calfLossData)
         this.loaded = true
@@ -316,11 +282,6 @@ export default {
 </script>
 
 <style>
-.inventory-line {
-  stroke: steelblue;
-  stroke-width: 1px;
-  fill: none;
-}
 .wolf-line {
   stroke: slategray;
   stroke-width: 1px;

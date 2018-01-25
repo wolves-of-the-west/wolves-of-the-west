@@ -36,7 +36,7 @@ export default {
             year: this.lastWolfKilledInYellowstone,
             value: this.yValue
           },
-          dx: -25,
+          dx: 25,
           dy: -25,
           connector: { end: 'arrow' }
         },

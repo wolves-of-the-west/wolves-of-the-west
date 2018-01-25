@@ -15,13 +15,14 @@
         ref="mouse" class="mouse"
         :width="bodyWidth" :height="bodyHeight"/>
       <g ref="body" clip-path="url(#bodyClipPath)">
-        <path ref="inventoryLine" class="inventory-line"/>
+        <path ref="cattleInventoryLine" class="adult-inventory-line"/>
+        <path ref="calfInventoryLine" class="youth-inventory-line"/>
         <path ref="cattleLossLine" class="adult-loss-line"/>
         <path ref="calfLossLine" class="youth-loss-line"/>
         <line ref="wolfReintroLine" class="wolf-line"/>
         <line ref="wolfSecondReintroLine" class="wolf-line"/>
         <line ref="wolfLastKilledInYellowstoneLine" class="wolf-line"/>
-        <g ref="tips"/>
+        <hoverable-data/>
       </g>
     </svg>
   </section>
@@ -32,12 +33,16 @@ import * as d3 from 'd3'
 import axios from 'axios'
 import * as numeral from 'numeral'
 import { mapGetters } from 'vuex'
-import { annotation, annotationCalloutCircle } from 'd3-svg-annotation'
+import HoverableData from '@/components/HoverableData'
 export default {
   props: ['title', 'type', 'state'],
+  components: {
+    HoverableData
+  },
   data () {
     return {
-      inventoryData: [],
+      cattleInventoryData: [],
+      calfInventoryData: [],
       cattleLossData: [],
       calfLossData: [],
       loaded: false,
@@ -61,6 +66,9 @@ export default {
       'usdaTimeWindow',
       'usdaYScaleType'
     ]),
+    inventoryData () {
+      return this.cattleInventoryData.concat(this.calfInventoryData)
+    },
     bodyHeight () {
       return this.height - this.margin.top - this.margin.bottom
     },
@@ -179,21 +187,6 @@ export default {
         'transform',
         `translate(${this.margin.left}, ${this.height - this.margin.bottom})`
       )
-      d3.select(this.$refs.mouse)
-        .on('mousemove', () => {
-          let m = d3.mouse(d3.event.currentTarget)
-          let x = m[0] - this.margin.left
-          let domainX = this.x.invert(x)
-          let search = new Date(domainX.getFullYear(), 0, 1)
-          let index = this.yearBisector(this.inventoryData, search)
-          if (this.inventoryData[index]) {
-            this.tip(this.inventoryData[index])
-          }
-        })
-        .on('mouseout', () => {
-          d3.select(this.$refs.tips).selectAll('g').remove()
-        })
-
       this.graph()
     },
     graph () {
@@ -227,8 +220,12 @@ export default {
         .attr('y2', 0)
     },
     graphState (t) {
-      d3.select(this.$refs.inventoryLine)
-        .datum(this.inventoryData)
+      d3.select(this.$refs.cattleInventoryLine)
+        .datum(this.cattleInventoryData)
+        .transition(t)
+        .attr('d', this.lineFn)
+      d3.select(this.$refs.calfInventoryLine)
+        .datum(this.calfInventoryData)
         .transition(t)
         .attr('d', this.lineFn)
       d3.select(this.$refs.cattleLossLine)
@@ -240,33 +237,10 @@ export default {
         .transition(t)
         .attr('d', this.lineFn)
     },
-    tip (d) {
-      let annotationtip = annotation()
-        .type(annotationCalloutCircle)
-        .annotations([d].map(d => {
-          return {
-            data: d,
-            dx: this.x(d.timestamp) > this.halfBodyWidth ? -10 : 10,
-            dy: this.yScale(d.value) > this.halfBodyHeight ? -5 : 5,
-            note: {
-              title: d.year,
-              label: this.yFormat(d.value)
-            },
-            subject: {
-              radius: 5,
-              radiusPadding: 0
-            }
-          }
-        }))
-        .accessors({
-          x: d => this.x(d.timestamp),
-          y: d => this.yScale(d.value)
-        })
-      d3.select(this.$refs.tips).call(annotationtip)
-    },
     fetchData () {
       return this.fetchStateData.then(response => {
-        this.inventoryData = this.objectifyTimestamps(response.data.inventoryData)
+        this.cattleInventoryData = this.objectifyTimestamps(response.data.cattleInventoryData)
+        this.calfInventoryData = this.objectifyTimestamps(response.data.calfInventoryData)
         this.cattleLossData = this.objectifyTimestamps(response.data.cattleLossData)
         this.calfLossData = this.objectifyTimestamps(response.data.calfLossData)
         this.yMax = response.data.maxStateValue

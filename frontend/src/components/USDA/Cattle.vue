@@ -3,7 +3,7 @@
     <v-card-text>
       <v-layout row wrap>
         <v-flex sm12 md4 lg6>
-          <h1 class="display-1">Cattle</h1>
+          <h1 class="display-1">Cattle and Calves</h1>
           <h2 class="subheading">Inventory and Loss by Year</h2>
           <h3 class="body-2" v-if="loaded">
             {{ xFormat(minYear) }}
@@ -18,6 +18,27 @@
         <v-flex sm12 md8 lg6 class="actions" v-if="loaded">
           <template v-if="loaded">
             <v-layout row wrap>
+              <v-flex xs12 sm4>
+                <svg class="legend-line">
+                  <line x1="0" x2="10" y1="10" y2="0" class="adult-inventory-line"/>
+                </svg>
+                Cattle Inventory
+                <br>
+                <svg class="legend-line">
+                  <line x1="0" x2="10" y1="10" y2="0" class="adult-loss-line"/>
+                </svg>
+                Cattle Loss
+                <br>
+                <svg class="legend-line">
+                  <line x1="0" x2="10" y1="10" y2="0" class="youth-inventory-line"/>
+                </svg>
+                Calf Inventory
+                <br>
+                <svg class="legend-line">
+                  <line x1="0" x2="10" y1="10" y2="0" class="youth-loss-line"/>
+                </svg>
+                Calf Loss
+              </v-flex>
               <v-flex xs12 sm4>
                 Zoom to:
                 <v-radio-group v-model="usdaTimeWindow">
@@ -152,5 +173,13 @@ export default {
   opacity: 0.75;
   margin-top: 1em;
   font-size: 0.75em;
+}
+.legend-line {
+  width: 10px;
+  height: 10px;
+  margin-right: 0.5em;
+}
+.legend-line line {
+  stroke-width: 2px;
 }
 </style>
