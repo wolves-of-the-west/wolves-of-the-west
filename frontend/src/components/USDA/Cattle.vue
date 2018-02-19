@@ -1,5 +1,5 @@
 <template>
-  <v-card flat>
+  <v-card raised>
     <v-card-text>
       <v-layout row wrap>
         <v-flex sm12 md4 lg6>
@@ -47,7 +47,7 @@
                 </v-radio-group>
               </v-flex>
               <v-flex xs12 sm4>
-                Scale inventory as:
+                Scale as:
                 <v-radio-group v-model="usdaYScaleType">
                   <v-radio label="Linear" value="linear"/>
                   <v-radio label="Logarithmic" value="log"/>
@@ -82,11 +82,47 @@
           <state-livestock-inventory type="Cattle" state="Wyoming"/>
         </v-flex>
       </v-layout>
+      <hr/>
       <v-layout row wrap>
         <v-flex xs12>
-          <p class="source">
-            <strong>Source:</strong>&ensp;<a href="https://quickstats.nass.usda.gov" target="_blank">USDA National Agricultural Statistics Service</a>
+          <p>
+            This data is sourced from
+            <a href="https://quickstats.nass.usda.gov" target="_blank">Quick Stats</a> &mdash;
+            a database provided by the USDA's National Agricultural Statistics Service.
           </p>
+          <div class="legend-row">
+            <svg class="legend-line">
+              <line x1="0" x2="10" y1="10" y2="0" class="adult-inventory-line"/>
+            </svg>
+            <p class="legend-info">
+              <strong>Cattle Inventory</strong> is not provided as a data point.
+              It must be derived by subtracting <span class="data-item">CATTLE, CALVES - INVENTORY</span> from <span class="data-item">CATTLE, INCL CALVES - INVENTORY</span>.
+            </p>
+          </div>
+          <div class="legend-row">
+            <svg class="legend-line">
+              <line x1="0" x2="10" y1="10" y2="0" class="adult-loss-line"/>
+            </svg>
+            <p class="legend-info">
+              <strong>Cattle Loss</strong> is <span class="data-item">CATTLE, (EXCL CALVES) - LOSS, DEATH, MEASURED IN HEAD</span>.
+            </p>
+          </div>
+          <div class="legend-row">
+            <svg class="legend-line">
+              <line x1="0" x2="10" y1="10" y2="0" class="youth-inventory-line"/>
+            </svg>
+            <p class="legend-info">
+              <strong>Calf Crop</strong> is <span class="data-item">CATTLE - CALF CROP, MEASURED IN HEAD</span>. Note that <a href="https://quickstats.nass.usda.gov" target="_blank">Quick Stats</a> provides a calf inventory and a calf crop. The crop is how many calves were born, whereas inventory is the number of calves. This is an important distinction because once calves exceed 499 pounds they are considered cattle.
+            </p>
+          </div>
+          <div class="legend-row">
+            <svg class="legend-line">
+              <line x1="0" x2="10" y1="10" y2="0" class="youth-loss-line"/>
+            </svg>
+            <p class="legend-info">
+              <strong>Calf Loss</strong> is <span class="data-item">CATTLE, CALVES - LOSS, DEATH, MEASURED IN HEAD</span>.
+            </p>
+          </div>
         </v-flex>
       </v-layout>
     </v-card-text>
@@ -174,12 +210,24 @@ export default {
   margin-top: 1em;
   font-size: 0.75em;
 }
+.legend-row {
+  display: flex;
+}
 .legend-line {
+  margin-top: 0.5em;
+  flex: 0 0 1em;
   width: 10px;
   height: 10px;
   margin-right: 0.5em;
 }
 .legend-line line {
   stroke-width: 2px;
+}
+hr {
+  margin: 1.5em 0;
+  opacity: 0.5;
+}
+.data-item {
+  color: slategray;
 }
 </style>
