@@ -51,33 +51,40 @@ def get_national_inventory():
     sql = """
       SELECT
         year,
-        calves,
+        calf_crop as calves,
         (all_cattle - calves) as cattle,
         CONCAT(year, '-01-01T00:00:00-00:00') AS timestamp
       FROM (
         SELECT
           year,
+          MAX(IF(data_item = 'CATTLE - CALF CROP, MEASURED IN HEAD', value, NULL)) as calf_crop,
           MAX(IF(data_item = 'CATTLE, CALVES - INVENTORY', value, NULL)) as calves,
           MAX(IF(data_item = 'CATTLE, INCL CALVES - INVENTORY', value, NULL)) as all_cattle
         FROM
           usda
         WHERE
           program = 'SURVEY'
-          AND period = 'FIRST OF JAN'
           AND geo_level = 'NATIONAL'
           AND commodity = 'CATTLE'
-          AND data_item IN (
-            'CATTLE, CALVES - INVENTORY',
-            'CATTLE, INCL CALVES - INVENTORY'
-          )
           AND domain = 'TOTAL'
-        GROUP BY
-          year
-        HAVING
-          calves IS NOT NULL
-          AND all_cattle IS NOT NULL
-        ORDER BY
-          year
+          AND (
+            period = 'FIRST OF JAN'
+            AND data_item IN (
+              'CATTLE, CALVES - INVENTORY',
+              'CATTLE, INCL CALVES - INVENTORY'
+            )
+          )
+          OR (
+            period = 'YEAR'
+            AND data_item = 'CATTLE - CALF CROP, MEASURED IN HEAD'
+          )
+          GROUP BY
+            year
+          HAVING
+            calves IS NOT NULL
+            AND all_cattle IS NOT NULL
+          ORDER BY
+            year
       ) as tmp
     """
     cursor.execute(sql)
@@ -98,31 +105,38 @@ def get_state_inventory(state):
       SELECT
         year,
         state,
-        calves,
+        calf_crop as calves,
         (all_cattle - calves) as cattle,
         CONCAT(year, '-01-01T00:00:00-00:00') AS timestamp
       FROM (
         SELECT
           year,
           state,
+          MAX(IF(data_item = 'CATTLE - CALF CROP, MEASURED IN HEAD', value, NULL)) as calf_crop,
           MAX(IF(data_item = 'CATTLE, CALVES - INVENTORY', value, NULL)) as calves,
           MAX(IF(data_item = 'CATTLE, INCL CALVES - INVENTORY', value, NULL)) as all_cattle
         FROM
           usda
         WHERE
           program = 'SURVEY'
-          AND period = 'FIRST OF JAN'
           AND geo_level = 'STATE'
           AND commodity = 'CATTLE'
-          AND data_item IN (
-            'CATTLE, CALVES - INVENTORY',
-            'CATTLE, INCL CALVES - INVENTORY'
-          )
           AND domain = 'TOTAL'
     """
     if (state.lower() != 'all'):
       sql += "AND state ='%s'" % state
-    sql += """
+    sql += """  
+        AND (
+          period = 'FIRST OF JAN'
+          AND data_item IN (
+            'CATTLE, CALVES - INVENTORY',
+            'CATTLE, INCL CALVES - INVENTORY'
+          )
+        )
+        OR (
+          period = 'YEAR'
+          AND data_item = 'CATTLE - CALF CROP, MEASURED IN HEAD'            
+        )
         GROUP BY
           year, state
         HAVING

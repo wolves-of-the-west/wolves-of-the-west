@@ -32,7 +32,7 @@
                 <svg class="legend-line">
                   <line x1="0" x2="10" y1="10" y2="0" class="youth-inventory-line"/>
                 </svg>
-                Calf Inventory
+                Calf Crop
                 <br>
                 <svg class="legend-line">
                   <line x1="0" x2="10" y1="10" y2="0" class="youth-loss-line"/>

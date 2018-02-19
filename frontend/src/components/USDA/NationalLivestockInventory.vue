@@ -101,6 +101,9 @@ export default {
         .x(d => { return this.x(d.timestamp) })
         .y(d => { return this.yScale(d.value) })
         .curve(d3.curveMonotoneX)
+        .defined(d => {
+          return d.timestamp && d.value
+        })
     },
     x () {
       return d3.scaleTime()
