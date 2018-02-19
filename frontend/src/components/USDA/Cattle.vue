@@ -4,7 +4,7 @@
       <v-layout row wrap>
         <v-flex sm12 md4 lg6>
           <h1 class="display-1">Cattle and Calves</h1>
-          <h2 class="subheading">Inventory and Loss by Year</h2>
+          <h2 class="subheading">Inventory, Crop, and Loss by Year</h2>
           <h3 class="body-2" v-if="loaded">
             {{ xFormat(minYear) }}
             &ndash;
