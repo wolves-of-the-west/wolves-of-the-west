@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <v-toolbar app dark fixed>
-      <h1>Wolves of the West</h1>
+      <v-toolbar-title>Wolves of the West</v-toolbar-title>
     </v-toolbar>
     <v-content>
       <v-container fluid>
