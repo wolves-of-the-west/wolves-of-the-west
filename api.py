@@ -4,15 +4,14 @@ import pymysql
 import pymysql.cursors
 from settings import *
 
-def get_db_connection():
-  return pymysql.connect(
-    host=HOST,
-    user=USER,
-    password=PW,
-    db=DB,
-    charset='utf8mb4',
-    cursorclass=pymysql.cursors.DictCursor
-  )
+connection = pymysql.connect(
+  host=HOST,
+  user=USER,
+  password=PW,
+  db=DB,
+  charset='utf8mb4',
+  cursorclass=pymysql.cursors.DictCursor
+)
 
 @hug.response_middleware()
 def CORS(request, response, resource):
@@ -46,7 +45,6 @@ def index():
   return contents
 
 def get_national_inventory():
-  connection = get_db_connection()
   with connection.cursor() as cursor:
     sql = """
       SELECT
@@ -99,7 +97,6 @@ def get_national_inventory():
   }
 
 def get_state_inventory(state):
-  connection = get_db_connection()
   with connection.cursor() as cursor:
     sql = """
       SELECT
@@ -170,7 +167,6 @@ def extract_cattle(data):
 
 @hug.get('/usda/cattle/stats')
 def usda_cattle_stats():
-  connection = get_db_connection()
   with connection.cursor() as cursor:
     sql = """
       SELECT
@@ -204,7 +200,6 @@ def usda_cattle_stats():
     """
     cursor.execute(sql)
     data = cursor.fetchone()
-  connection.close()
   return data
 
 @hug.get('/usda/cattle/national')
@@ -218,7 +213,6 @@ def usda_cattle_national():
   }
 
 def get_national_loss(data_item):
-  connection = get_db_connection()
   with connection.cursor() as cursor:
     sql = """
       SELECT
@@ -245,8 +239,6 @@ def get_national_loss(data_item):
 
 @hug.get('/usda/cattle/state')
 def usda_cattle_state(state):
-
-  connection = get_db_connection()
   with connection.cursor() as cursor:
     maxSQL = """
       SELECT
@@ -275,7 +267,6 @@ def usda_cattle_state(state):
   }
 
 def get_state_loss(data_item, state):
-  connection = get_db_connection()
   with connection.cursor() as cursor:
     sql = """
       SELECT
